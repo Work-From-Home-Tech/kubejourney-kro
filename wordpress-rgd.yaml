@@ -11,6 +11,7 @@ spec:
     spec:
       # Spec fields that users can provide.
       name: string
+      namespace: string | default="default"
       image: string | default="wordpress:6.4-apache"
       ingress:
         enabled: boolean | default=false
@@ -48,7 +49,7 @@ spec:
                   image: ${schema.spec.image} # Use the image provided by user
                   env:
                     - name: WORDPRESS_DB_HOST
-                      value: ${schema.spec.name}-service-db.default.svc:3306
+                      value: ${schema.spec.name}-service-db.${schema.spec.namespace}.svc:3306
                     - name: WORDPRESS_DB_NAME
                       value: wordpress
                     - name: WORDPRESS_DB_USER

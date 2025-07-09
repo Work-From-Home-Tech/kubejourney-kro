@@ -1,0 +1,12 @@
+apiVersion: kro.run/v1alpha1
+kind: WordpressServer
+metadata:
+  name: my-wordpress-dev
+  namespace: development
+spec:
+  name: wordpress-dev
+  namespace: development
+  ingress:
+    enabled: true
+  db_password: "dev-secret-password"
+  replicas: 2
