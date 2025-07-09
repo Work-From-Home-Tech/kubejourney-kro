@@ -1,0 +1,8 @@
+apiVersion: kro.run/v1alpha1
+kind: WordpressServer
+metadata:
+  name: my-wordpress
+spec:
+  name: wordpress1
+  ingress:
+    enabled: true
