@@ -4,9 +4,10 @@ metadata:
   name: wordpress-prod
   namespace: production
 spec:
-  name: wordpress-dev
+  name: wordpress-prod
   namespace: production
   ingress:
     enabled: true
+    host: wp-production
   db_password: "prod-secret-password"
   replicas: 2

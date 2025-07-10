@@ -15,7 +15,7 @@ spec:
       image: string | default="wordpress:6.4-apache"
       ingress:
         enabled: boolean | default=false
-        host: string | default=${service.status.loadBalancer.ingress[0].hostname}
+        host: string | default=""
         port: integer | default=80
       db_password: string | default="my-secret-pw"
       replicas: integer | default=1
@@ -24,7 +24,7 @@ spec:
       frontendConditions: ${frontend.status.conditions}
       backendConditions: ${backend.status.conditions}
       availableReplicas: ${frontend.status.availableReplicas}
-      # serviceEndpoint: ${service.status.loadBalancer.ingress[0].hostname}
+      serviceEndpoint: ${service.spec.clusterIP}
 
   # Define the resources this API will manage.
   resources:
@@ -134,7 +134,8 @@ spec:
         spec:
           ingressClassName: nginx
           rules:
-            - http:
+            - host: ${schema.spec.ingress.host}
+              http:
                 paths:
                   - path: "/"
                     pathType: Prefix

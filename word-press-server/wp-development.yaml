@@ -8,5 +8,6 @@ spec:
   namespace: development
   ingress:
     enabled: true
+    host: wp-development
   db_password: "dev-secret-password"
   replicas: 2
