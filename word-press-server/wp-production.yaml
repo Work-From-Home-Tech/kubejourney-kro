@@ -8,5 +8,5 @@ spec:
   namespace: production
   ingress:
     enabled: true
-  db_password: "dev-secret-password"
+  db_password: "prod-secret-password"
   replicas: 2
