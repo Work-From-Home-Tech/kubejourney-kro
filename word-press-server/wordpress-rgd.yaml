@@ -56,6 +56,21 @@ spec:
                       value: root
                     - name: WORDPRESS_DB_PASSWORD
                       value: ${schema.spec.db_password}
+                    - name: WORDPRESS_CONFIG_EXTRA
+                      value: |
+                        define('WP_HOME', 'http://${schema.spec.ingress.host}');
+                        define('WP_SITEURL', 'http://${schema.spec.ingress.host}');
+                        define('FORCE_SSL_ADMIN', false);
+                        define('COOKIE_DOMAIN', '.${schema.spec.ingress.host}');
+                        define('COOKIEPATH', '/');
+                        define('SITECOOKIEPATH', '/');
+                        define('ADMIN_COOKIE_PATH', '/');
+                        define('PLUGINS_COOKIE_PATH', '/');
+                        $_SERVER['HTTP_HOST'] = '${schema.spec.ingress.host}';
+                        $_SERVER['SERVER_NAME'] = '${schema.spec.ingress.host}';
+                        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                            $_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+                        }
                   ports:
                     - containerPort: 80
                       name: wordpress
@@ -129,8 +144,6 @@ spec:
         kind: Ingress
         metadata:
           name: ${schema.spec.name}-ingress
-          annotations:
-            nginx.ingress.kubernetes.io/rewrite-target: /
         spec:
           ingressClassName: nginx
           rules:
