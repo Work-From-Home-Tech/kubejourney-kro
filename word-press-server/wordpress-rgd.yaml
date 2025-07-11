@@ -48,6 +48,7 @@ spec:
             storage: ${schema.spec.storage.wordpress.size}
           accessModes:
             - ReadWriteOnce
+          persistentVolumeReclaimPolicy: Delete
           storageClassName: ${schema.spec.storage.storageClass}
           hostPath:
             path: /tmp/${schema.spec.name}-wordpress-data
@@ -66,6 +67,7 @@ spec:
             storage: ${schema.spec.storage.mariadb.size}
           accessModes:
             - ReadWriteOnce
+          persistentVolumeReclaimPolicy: Delete
           storageClassName: ${schema.spec.storage.storageClass}
           hostPath:
             path: /tmp/${schema.spec.name}-mariadb-data
