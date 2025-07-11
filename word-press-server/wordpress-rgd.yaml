@@ -19,6 +19,13 @@ spec:
         port: integer | default=80
       db_password: string | default="my-secret-pw"
       replicas: integer | default=1
+      storage:
+        storageClass: string | default="local-path"
+        wordpress:
+          size: string | default="10Gi"
+        mariadb:
+          size: string | default="20Gi"
+        enabled: boolean | default=true
     status:
       # Fields the controller will inject into instances status.
       frontendConditions: ${frontend.status.conditions}
@@ -28,7 +35,120 @@ spec:
 
   # Define the resources this API will manage.
   resources:
+    - id: wordpressPV
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: v1
+        kind: PersistentVolume
+        metadata:
+          name: ${schema.spec.name}-wordpress-pv
+        spec:
+          capacity:
+            storage: ${schema.spec.storage.wordpress.size}
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: ${schema.spec.storage.storageClass}
+          hostPath:
+            path: /tmp/${schema.spec.name}-wordpress-data
+            type: DirectoryOrCreate
+
+    - id: mariadbPV
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: v1
+        kind: PersistentVolume
+        metadata:
+          name: ${schema.spec.name}-mariadb-pv
+        spec:
+          capacity:
+            storage: ${schema.spec.storage.mariadb.size}
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: ${schema.spec.storage.storageClass}
+          hostPath:
+            path: /tmp/${schema.spec.name}-mariadb-data
+            type: DirectoryOrCreate
+
+    - id: wordpressPVC
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: ${schema.spec.name}-wordpress-pvc
+          namespace: ${schema.spec.namespace}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: ${schema.spec.storage.storageClass}
+          resources:
+            requests:
+              storage: ${schema.spec.storage.wordpress.size}
+
+    - id: mariadbPVC
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: ${schema.spec.name}-mariadb-pvc
+          namespace: ${schema.spec.namespace}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: ${schema.spec.storage.storageClass}
+          resources:
+            requests:
+              storage: ${schema.spec.storage.mariadb.size}
+
     - id: frontend
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.spec.name} # Use the name provided by user
+        spec:
+          replicas: ${schema.spec.replicas}
+          selector:
+            matchLabels:
+              app: ${schema.spec.name}
+          template:
+            metadata:
+              labels:
+                app: ${schema.spec.name}
+            spec:
+              containers:
+                - name: ${schema.spec.name}
+                  image: ${schema.spec.image} # Use the image provided by user
+                  env:
+                    - name: WORDPRESS_DB_HOST
+                      value: ${schema.spec.name}-service-db.${schema.spec.namespace}.svc:3306
+                    - name: WORDPRESS_DB_NAME
+                      value: wordpress
+                    - name: WORDPRESS_DB_USER
+                      value: root
+                    - name: WORDPRESS_DB_PASSWORD
+                      value: ${schema.spec.db_password}
+                  ports:
+                    - containerPort: 80
+                      name: wordpress
+                  volumeMounts:
+                    - name: wordpress-storage
+                      mountPath: /var/www/html
+              volumes:
+                - name: wordpress-storage
+                  persistentVolumeClaim:
+                    claimName: ${schema.spec.name}-wordpress-pvc
+
+    - id: frontendNoStorage
+      includeWhen:
+        - ${!schema.spec.storage.enabled}
       template:
         apiVersion: apps/v1
         kind: Deployment
@@ -67,6 +187,44 @@ spec:
                   emptyDir: {}
 
     - id: backend
+      includeWhen:
+        - ${schema.spec.storage.enabled}
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.spec.name}-db # Use the name provided by user
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: ${schema.spec.name}-db
+          template:
+            metadata:
+              labels:
+                app: ${schema.spec.name}-db
+            spec:
+              containers:
+                - name: ${schema.spec.name}-db
+                  image: mariadb:10.6 # Use the image provided by user
+                  env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    value: ${schema.spec.db_password}
+                  - name: MYSQL_DATABASE
+                    value: wordpress
+                  ports:
+                    - containerPort: 3306
+                  volumeMounts:
+                    - name: mariadb-storage
+                      mountPath: /var/lib/mysql
+              volumes:
+                - name: mariadb-storage
+                  persistentVolumeClaim:
+                    claimName: ${schema.spec.name}-mariadb-pvc
+
+    - id: backendNoStorage
+      includeWhen:
+        - ${!schema.spec.storage.enabled}
       template:
         apiVersion: apps/v1
         kind: Deployment

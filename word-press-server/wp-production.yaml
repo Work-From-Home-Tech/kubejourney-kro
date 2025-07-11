@@ -9,5 +9,12 @@ spec:
   ingress:
     enabled: true
     host: wp-production
-  db_password: "prod-secret-password"
-  replicas: 2
+  db_password: "prod-password"
+  replicas: 1
+  storage:
+    enabled: true
+    storageClass: "local-path"
+    wordpress:
+      size: "15Gi"
+    mariadb:
+      size: "25Gi"

@@ -1,7 +1,7 @@
 apiVersion: kro.run/v1alpha1
 kind: WordpressServer
 metadata:
-  name: my-wordpress-dev
+  name: wordpress-dev
   namespace: development
 spec:
   name: wordpress-dev
@@ -9,5 +9,12 @@ spec:
   ingress:
     enabled: true
     host: wp-development
-  db_password: "dev-secret-password"
-  replicas: 2
+  db_password: "dev-password"
+  replicas: 1
+  storage:
+    enabled: true
+    storageClass: "local-path"
+    wordpress:
+      size: "15Gi"
+    mariadb:
+      size: "25Gi"
