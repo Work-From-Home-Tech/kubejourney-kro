@@ -12,12 +12,13 @@ spec:
       # Spec fields that users can provide.
       name: string
       namespace: string | default="default"
-      image: string | default="wordpress:6.4-apache"
+      wp_image: string | default="wordpress:6.8-apache"
       ingress:
         enabled: boolean | default=false
         host: string | default=""
         port: integer | default=80
       db_password: string | default="my-secret-pw"
+      db_image: string | default="mariadb:10.6"
       replicas: integer | default=1
       storage:
         storageClass: string | default="local-path"
@@ -125,9 +126,11 @@ spec:
               labels:
                 app: ${schema.spec.name}
             spec:
+              securityContext:
+                fsGroup: 33
               containers:
                 - name: ${schema.spec.name}
-                  image: ${schema.spec.image} # Use the image provided by user
+                  image: ${schema.spec.wp_image} # Use the image provided by user
                   env:
                     - name: WORDPRESS_DB_HOST
                       value: ${schema.spec.name}-service-db.${schema.spec.namespace}.svc:3306
@@ -168,7 +171,7 @@ spec:
             spec:
               containers:
                 - name: ${schema.spec.name}
-                  image: ${schema.spec.image} # Use the image provided by user
+                  image: ${schema.spec.wp_image} # Use the image provided by user
                   env:
                     - name: WORDPRESS_DB_HOST
                       value: ${schema.spec.name}-service-db.${schema.spec.namespace}.svc:3306
@@ -208,7 +211,7 @@ spec:
             spec:
               containers:
                 - name: ${schema.spec.name}-db
-                  image: mariadb:10.6 # Use the image provided by user
+                  image: ${schema.spec.db_image} # Use the image provided by user
                   env:
                   - name: MYSQL_ROOT_PASSWORD
                     value: ${schema.spec.db_password}
@@ -244,7 +247,7 @@ spec:
             spec:
               containers:
                 - name: ${schema.spec.name}-db
-                  image: mariadb:10.6 # Use the image provided by user
+                  image: ${schema.spec.db_image} # Use the image provided by user
                   env:
                   - name: MYSQL_ROOT_PASSWORD
                     value: ${schema.spec.db_password}
